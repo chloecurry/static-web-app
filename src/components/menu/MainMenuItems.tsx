@@ -43,12 +43,18 @@ const MainMenuItems = (props: any) => {
         />
       </ListItem>
       <ListItem disablePadding>
-        <ListItemButton>
+        {/* <ListItemButton>
           <ListItemIcon>
             <Export />
           </ListItemIcon>
           <ListItemText primary="Export Calendar" />
-        </ListItemButton>
+        </ListItemButton> */}
+        <StateMenuButton
+          icon={Export}
+          parentProp={props}
+          text={'Export Calendar'}
+          state={4}
+        />
       </ListItem>
       <ListItem disablePadding>
         <ListItemButton>
