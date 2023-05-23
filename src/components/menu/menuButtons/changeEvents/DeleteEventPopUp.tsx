@@ -5,16 +5,53 @@ import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
+import { APIManager } from '@/utils/APIManager'
+import { Event } from '@/interfaces/Event'
+import { useAPIContext } from '@/store/APIContext'
 
 const DeleteEventPopUp = (props: any) => {
   const [open, setOpen] = React.useState(false)
+  const { eventId, updateEvents, setUpdateCats } = useAPIContext()
 
   const handleClickOpen = () => {
     setOpen(true)
   }
 
+  const handleCloseDelete = () => {
+    deleteEvent(eventId)
+      .then(() => {
+        setOpen(false)
+        props.clickAway()
+        props.updateState(0)
+      })
+      .then(() => alert('Event successfully deleted.'))
+  }
+
   const handleClose = () => {
     setOpen(false)
+  }
+
+  async function deleteEvent(id: number) {
+    let payload: Event = {
+      event_id: null,
+      event_date: new Date(),
+      category_id: 69,
+      event_description: null
+    }
+    APIManager.getInstance()
+      .then((instance) => {
+        instance.deleteEvent(id, payload)
+      })
+      .then((data) => {
+        updateEvents()
+        console.log(data)
+      })
+      .then(() => {
+        setUpdateCats((prev) => !prev)
+      })
+      .catch((err) => {
+        console.log(`DeletePopUp error: ${err}`)
+      })
   }
 
   function DeleteButton() {
@@ -48,6 +85,7 @@ const DeleteEventPopUp = (props: any) => {
   return (
     <>
       <DeleteButton />
+      {/*<EventDeletePopup />*/}
       <Dialog
         sx={{
           '& .MuiDialog-container': {
@@ -70,7 +108,7 @@ const DeleteEventPopUp = (props: any) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
-          <Button onClick={handleClose} autoFocus>
+          <Button onClick={handleCloseDelete} autoFocus>
             Delete
           </Button>
         </DialogActions>

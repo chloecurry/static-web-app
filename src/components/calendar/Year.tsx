@@ -66,7 +66,7 @@ const Year = () => {
           </Grid>
           <Month
             currentDate={new Date(currentDate.getFullYear(), monthNumber, 1)}
-            month={monthNumber}
+            month={monthNumber + 1}
             weekNum={week}
             numWeeks={numWeeks}
             year={currentDate.getFullYear()}
@@ -102,6 +102,7 @@ const MonthButton = ({ month, handleClick }: MBProps) => {
   const monthNumber = months.indexOf(month)
   return (
     <Button
+      sx={{ borderRadius: '60px' }}
       style={{ color: 'black', fontSize: '75%' }}
       onClick={() => handleClick(monthNumber)}
     >

@@ -4,6 +4,7 @@ import Month from './Month'
 import Year from './Year'
 import { useCalendarContext } from '@/store/CalendarContext'
 
+//let CatMap = new Map<String, Category>()
 const Calendar = () => {
   const { isYearView, currentDate } = useCalendarContext()
 
@@ -11,7 +12,12 @@ const Calendar = () => {
     return isYearView ? (
       <Year />
     ) : (
-      <Month currentDate={currentDate} yearView={isYearView} />
+      <Month
+        currentDate={currentDate}
+        yearView={isYearView}
+        month={currentDate.getMonth() + 1}
+        year={currentDate.getFullYear()}
+      />
     )
   }
 
@@ -20,7 +26,7 @@ const Calendar = () => {
       bgcolor="white"
       color="black"
       flex={1}
-      sx={{ height: 'calc(100vh - 64px)' }}
+      sx={{ height: 'calc(100vh - 74px)', overflowY: 'scroll' }}
       border={0}
     >
       {renderCalendar()}

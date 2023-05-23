@@ -1,7 +1,7 @@
 import {
-  Avatar,
   Badge,
   ClickAwayListener,
+  List,
   Popper,
   Stack,
   Typography
@@ -10,41 +10,53 @@ import React, { useEffect, useState } from 'react'
 import NotificationsIcon from '@mui/icons-material/Notifications'
 import CloseIcon from '@mui/icons-material/Close'
 import { APIManager } from '@/utils/APIManager'
-import { useCalendarContext } from '@/store/CalendarContext'
-
-type Alert = {
-  name: String
-  date: Date
-  admin: String
-  action: String
-}
+import { Alert } from '@/interfaces/Alert'
+import { Button } from '@mui/material/'
 
 const defaultColour = 'rgb(137,137,137)'
 const fontColour = 'rgb(90,90,90)'
 
+const logNotificationsChecked = () => {
+  APIManager.getInstance().then((instance) =>
+    instance.setLastNotificationCheck()
+  )
+}
+
 const AlertButton = () => {
+  const [alertsChecked, setAlertsChecked] = useState<boolean>(false)
   const [hasAlerts, setHasAlerts] = useState<boolean>(false)
   const [panelAnchor, setPanelAnchor] = useState<null | HTMLElement>(null)
 
   const handleClick = (event: any) => {
-    panelAnchor ? setPanelAnchor(null) : setPanelAnchor(event.currentTarget)
+    setPanelAnchor(event.currentTarget)
+    if (!alertsChecked) logNotificationsChecked()
+    setAlertsChecked(true)
   }
 
   return (
-    <Badge variant="dot" badgeContent={2} color="error" invisible={!hasAlerts}>
-      <NotificationsIcon onClick={handleClick} color="action" />
-      <AlertPanel
-        hasAlerts={hasAlerts}
-        setHasAlerts={setHasAlerts}
-        panelAnchor={panelAnchor}
-        onClickAway={handleClick}
-      />
-    </Badge>
+    <Button
+      onClick={handleClick}
+      sx={{ minWidth: '45px', maxWidth: '45px', borderRadius: '60px' }}
+    >
+      <Badge
+        variant="dot"
+        badgeContent={2}
+        color="error"
+        invisible={!hasAlerts}
+      >
+        <NotificationsIcon color="action" />
+        <AlertPanel
+          hasAlerts={hasAlerts}
+          setHasAlerts={setHasAlerts}
+          panelAnchor={panelAnchor}
+          onClickAway={() => setPanelAnchor(null)}
+        />
+      </Badge>
+    </Button>
   )
 }
 
 const AlertPanel = (props: any) => {
-  const { accountId } = useCalendarContext()
   const [alerts, setAlerts] = useState<Alert[]>([])
   const alertPanelStyle = {
     bgcolor: 'white',
@@ -52,53 +64,26 @@ const AlertPanel = (props: any) => {
     marginTop: '20px',
     paddingTop: '10px',
     height: 'calc(100vh - 64px)',
-    width: 400,
+    overflow: 'auto',
     boxShadow: '0 0 5px #ccc'
   }
 
   useEffect(() => {
-    setAlerts([
-      {
-        name: 'Expense Cutoff',
-        date: new Date('2023-10-13'),
-        admin: 'Steve',
-        action: 'added'
-      },
-      {
-        name: 'Annual General Meeting',
-        date: new Date('2023-05-13'),
-        admin: 'Shawn',
-        action: 'added'
-      },
-      {
-        name: 'Office Closed',
-        date: new Date('2023-12-23'),
-        admin: 'Nash',
-        action: 'added'
-      },
-      {
-        name: "Jerry's Birthday Party",
-        date: new Date('2023-07-21'),
-        admin: 'Shawn',
-        action: 'deleted'
-      }
-    ])
-
-    props.setHasAlerts(true)
-
-    // @TODO: wait until token verification is done in the backend before parsing the response
-    // As of right now, the response fails here. I've set some placeholder data below for testing purposes.
     APIManager.getInstance()
-      .then((instance) => instance.getNotification(accountId))
-      .then((data) => {
-        console.log(data)
+      .then((instance) => instance.getNotification())
+      .then((data) => data.result)
+      .then((result) => {
+        if (result.length > 0) {
+          setAlerts(result)
+          props.setHasAlerts(true)
+        }
       })
   }, [])
 
   const renderAlerts = () => {
     const alertItems = []
     for (const alert of alerts) {
-      const handleClick = () => {
+      const handleAlertClick = () => {
         var index = alerts.indexOf(alert)
         if (index > -1) {
           alerts.splice(index, 1)
@@ -107,20 +92,20 @@ const AlertPanel = (props: any) => {
         if (alerts.length == 0) props.setHasAlerts(false)
       }
       alertItems.push(
-        <AlertItem key={alert} alert={alert} handleClick={handleClick} />
+        <AlertItem key={alert} alert={alert} handleClick={handleAlertClick} />
       )
     }
-    return alertItems
+    return alertItems.reverse()
   }
 
   return (
     <Popper
       open={Boolean(props.panelAnchor)}
       anchorEl={props.panelAnchor}
-      sx={{ bgcolor: 'white' }}
+      sx={{ bgcolor: 'white', width: { sm: '300px', md: '400px' } }}
     >
       <ClickAwayListener onClickAway={props.onClickAway}>
-        <Stack style={alertPanelStyle}>
+        <List style={alertPanelStyle}>
           {props.hasAlerts ? (
             renderAlerts()
           ) : (
@@ -128,14 +113,28 @@ const AlertPanel = (props: any) => {
               No alerts at this time.
             </Typography>
           )}
-        </Stack>
+        </List>
       </ClickAwayListener>
     </Popper>
   )
 }
 
 const AlertItem = (props: any) => {
-  const { name, date, admin, action } = props.alert
+  const { category_name, event_date, update_type } = props.alert
+
+  let action: string
+  switch (update_type) {
+    case 1:
+      action = 'Updated'
+      break
+    case 3:
+      action = 'Deleted'
+      break
+    default:
+      action = 'Added'
+  }
+
+  const date = new Date(event_date)
 
   const alertItemStyle = {
     minHeight: '60px',
@@ -148,6 +147,12 @@ const AlertItem = (props: any) => {
     paddingLeft: '10px'
   }
 
+  const dateStr = date.toUTCString().substring(4, 16)
+  const formattedDateStr =
+    dateStr.slice(0, dateStr.length - 5) +
+    ',' +
+    dateStr.slice(dateStr.length - 5)
+
   return (
     <Stack
       direction="row"
@@ -156,11 +161,10 @@ const AlertItem = (props: any) => {
       justifyContent="space-between"
       style={alertItemStyle}
     >
-      <Avatar alt={admin} src={`placeholder`} />
       <Typography color={fontColour} style={{ paddingLeft: 10 }}>
-        {`${admin} ${action} `}
-        <strong>{name}</strong>
-        {` on ${date.toDateString().substring(4)}`}
+        {`${action} `}
+        <strong>{category_name}</strong>
+        {` on ${formattedDateStr}.`}
       </Typography>
       <CloseIcon onClick={props.handleClick}></CloseIcon>
     </Stack>

@@ -2,35 +2,86 @@ import {
   List,
   ListItem,
   ListItemText,
-  ListItemButton,
   ThemeProvider,
   Button,
   Typography,
-  Box
+  Box,
+  AccordionSummary,
+  Accordion,
+  AccordionDetails
 } from '@mui/material'
 import React, { useEffect, useState } from 'react'
 import MuiTheme from '@/styles/MuiTheme'
 // @ts-ignore
 import { FixedSizeList, ListChildComponentProps } from 'react-window'
-import { useCalendarContext } from '@/store/CalendarContext'
 import DeleteEventPopUp from '@/components/menu/menuButtons/changeEvents/DeleteEventPopUp'
+import { useAPIContext } from '@/store/APIContext'
+import { useCalendarContext } from '@/store/CalendarContext'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 
-// placeholder for the list of categories
-let EventList: string[] = []
+let EventList: (string | undefined)[] = []
+let IdList: (number | null)[] = []
+let CatList: (number | null)[] = []
+let DescriptionList: (string | null)[] = []
 
 // @ts-ignore
 const ChangeDeleteEvent = (props: any) => {
+  const { isAdmin } = useAPIContext()
   const { selectedDate } = useCalendarContext()
+  const {
+    events,
+    catMap,
+    setSelectedEvent,
+    categories,
+    changeEventId,
+    eventId,
+    updateCats
+  } = useAPIContext()
   const [selected, setSelected] = useState(null)
-  const { categories } = useCalendarContext()
+  const [expanded, setExpanded] = useState<number | false>(false)
+  const [eventsState, setEventsState] = useState(EventList)
+  const [descriptionList, setDescriptionList] = useState(DescriptionList)
 
   useEffect(() => {
-    for (let i = 0; i < categories.length; i++) {
-      EventList.push(categories[i].category_name)
+    EventList = []
+    CatList = []
+    IdList = []
+    DescriptionList = []
+    for (let i = 0; i < events.length; i++) {
+      if (selectedDate) {
+        let testDate = new Date(
+          +selectedDate.substring(6, 10),
+          +selectedDate.substring(0, 2),
+          +selectedDate.substring(3, 5)
+        )
+        // ok so like program thinks this is a date object
+        // but when console log typeof events[i].event_date, it says string
+        // so like idk
+        let eDate = new Date(
+          +(events[i].event_date as unknown as string).substring(0, 4),
+          +(events[i].event_date as unknown as string).substring(5, 7),
+          +(events[i].event_date as unknown as string).substring(8, 10)
+        )
+        if (+eDate === +testDate) {
+          if (catMap.get(events[i].category_id) !== undefined) {
+            EventList.push(catMap.get(events[i].category_id))
+            IdList.push(events[i].event_id)
+            CatList.push(events[i].category_id)
+            if (
+              events[i].event_description === null ||
+              events[i].event_description === ''
+            ) {
+              DescriptionList.push('No additional details.')
+            } else {
+              DescriptionList.push(events[i].event_description)
+            }
+          }
+        }
+      }
     }
-  }, [selected])
-
-  // format date
+    setDescriptionList(DescriptionList)
+    setEventsState(EventList)
+  }, [selected, categories, eventId, events, updateCats])
 
   function EditEvent() {
     if (selected === null) {
@@ -62,26 +113,50 @@ const ChangeDeleteEvent = (props: any) => {
     }
   }
 
-  // render list for the scroll function
-  function renderList(props: ListChildComponentProps) {
-    const { index, style } = props
-
-    const handleSelect = () => {
+  function renderList() {
+    const handleSelect = (index: any) => {
       setSelected(index)
+      setSelectedEvent(CatList[index] as number) // basically category id of event
+      changeEventId(IdList[index] as number)
     }
-    return (
-      <ListItem
-        style={style}
-        key={index}
-        component="div"
-        disablePadding
-        onClick={handleSelect}
-      >
-        <ListItemButton sx={{ pl: 5, pt: 0 }} selected={selected === index}>
-          <ListItemText primary={`${EventList[index]}`} />
-        </ListItemButton>
-      </ListItem>
-    )
+
+    const handleChange =
+      (index: number) => (event: React.SyntheticEvent, isExpanded: boolean) => {
+        setExpanded(isExpanded ? index : false)
+        console.log(event.bubbles)
+      }
+
+    return eventsState.map((value, index) => {
+      return (
+        <ListItem
+          key={index}
+          component="div"
+          disablePadding
+          onClick={() => handleSelect(index)}
+        >
+          <Accordion
+            expanded={index === expanded}
+            onChange={handleChange(index)}
+            sx={{ backgroundColor: index === expanded ? 'lightgrey' : 'white' }}
+          >
+            <AccordionSummary
+              sx={{ width: '310px' }}
+              expandIcon={<ExpandMoreIcon />}
+              aria-controls="panel1bh-content"
+              id="panel1bh-header"
+            >
+              <Typography>{value}</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Typography>
+                {descriptionList[index]}
+                {``}{' '}
+              </Typography>
+            </AccordionDetails>
+          </Accordion>
+        </ListItem>
+      )
+    })
   }
 
   const handleBackClick = () => {
@@ -94,7 +169,7 @@ const ChangeDeleteEvent = (props: any) => {
         <ListItem>
           <ListItemText
             sx={{ color: '#898989', textDecoration: 'underline' }}
-            secondary="Change / Delete Event"
+            secondary={isAdmin ? 'Change / Delete Event' : 'Selected Event'}
           />
           <Box
             sx={{
@@ -107,6 +182,11 @@ const ChangeDeleteEvent = (props: any) => {
           >
             <Typography
               onClick={handleBackClick}
+              sx={{
+                '&:hover': {
+                  cursor: 'pointer'
+                }
+              }}
               variant="body2"
               color="#898989"
             >
@@ -118,50 +198,75 @@ const ChangeDeleteEvent = (props: any) => {
           <ListItemText primary={`Selected date: ${selectedDate}`} />
         </ListItem>
         <ListItem>
-          <ListItemText primary="Please select event:" />
+          <ListItemText
+            primary={
+              eventsState.length === 0
+                ? 'No events on this day.'
+                : 'Please select event:'
+            }
+          />
         </ListItem>
-        <FixedSizeList
-          height={200}
-          width={360}
-          itemSize={38}
-          itemCount={EventList.length}
-          overscanCount={5}
+        <List
+          disablePadding={true}
+          style={{
+            overflow: 'auto',
+            overflowY: 'scroll',
+            height: '300px'
+          }}
         >
-          {renderList}
-        </FixedSizeList>
+          {renderList()}
+        </List>
       </List>
-      <List className="bottom-buttons-cat" disablePadding={true}>
-        <ListItem style={{ display: 'flex', justifyContent: 'center' }}>
-          <Button
-            className="menu-button"
-            size="medium"
-            variant="contained"
-            color="primary"
-            onClick={() => {
-              props.updateState(1)
-            }}
-          >
-            Add New Event
-          </Button>
-        </ListItem>
-        <ListItem style={{ display: 'flex', justifyContent: 'center' }}>
-          <EditEvent></EditEvent>
-        </ListItem>
-        <ListItem style={{ display: 'flex', justifyContent: 'center' }}>
-          <DeleteEventPopUp selected={selected}>Delete Event</DeleteEventPopUp>
-        </ListItem>
-        <ListItem style={{ display: 'flex', justifyContent: 'center' }}>
-          <Button
-            className="menu-button"
-            size="medium"
-            variant="contained"
-            color="primary"
-            onClick={handleBackClick}
-          >
-            Cancel
-          </Button>
-        </ListItem>
-      </List>
+      {isAdmin && (
+        <List
+          className="bottom-buttons-cat"
+          disablePadding={true}
+          sx={{
+            position: 'absolute',
+            margin: 'auto',
+            bottom: '0',
+            width: '100%',
+            height: '26%'
+          }}
+        >
+          <ListItem style={{ display: 'flex', justifyContent: 'center' }}>
+            <Button
+              className="menu-button"
+              size="medium"
+              variant="contained"
+              color="primary"
+              onClick={() => {
+                props.updateState(1)
+              }}
+            >
+              Add New Event
+            </Button>
+          </ListItem>
+          <ListItem style={{ display: 'flex', justifyContent: 'center' }}>
+            <EditEvent />
+          </ListItem>
+          <ListItem style={{ display: 'flex', justifyContent: 'center' }}>
+            <DeleteEventPopUp
+              clickAway={props.clickAway}
+              updateState={props.updateState}
+              selected={selected}
+            >
+              Delete Event
+            </DeleteEventPopUp>
+          </ListItem>
+          <ListItem style={{ display: 'flex', justifyContent: 'center' }}>
+            <Button
+              className="menu-button"
+              size="medium"
+              variant="contained"
+              color="primary"
+              onClick={handleBackClick}
+            >
+              Cancel
+            </Button>
+          </ListItem>
+        </List>
+      )}
     </ThemeProvider>
   )
 }

@@ -6,10 +6,12 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
 import { APIManager } from '@/utils/APIManager'
+import { useAPIContext } from '@/store/APIContext'
 
 const DeleteCategoryPopUp = (props: any) => {
   const [open, setOpen] = useState(false)
   let admin_id = 'user'
+  const { updateEvents, updateCategories, setUpdateCats } = useAPIContext()
 
   const handleClickOpen = () => {
     setOpen(true)
@@ -18,6 +20,9 @@ const DeleteCategoryPopUp = (props: any) => {
   const handleClose = () => {
     setOpen(false)
     props.clickAway()
+  }
+  const handleCancel = () => {
+    setOpen(false)
   }
 
   const handleDelete = () => {
@@ -31,8 +36,13 @@ const DeleteCategoryPopUp = (props: any) => {
       .then((instance) =>
         instance.deleteCategory(categoryID, { admin_id: admin_id })
       )
-      .then((data) => {
-        console.log(data)
+      .then(() => {
+        updateEvents()
+        updateCategories()
+      })
+      .then(() => {
+        setUpdateCats((prev) => !prev)
+        alert('Category deleted.')
       })
       .catch((err) => {
         console.log(err)
@@ -72,12 +82,13 @@ const DeleteCategoryPopUp = (props: any) => {
         <DialogTitle id="alert-dialog-title">{'Delete Category'}</DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-            Are you sure you would like to delete the selected category? This
-            action is permanent.
+            Are you sure you would like to delete{' '}
+            {<strong>{props.name}</strong>}? All related events will also be
+            deleted. This action is permanent.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
+          <Button onClick={handleCancel}>Cancel</Button>
           <Button onClick={handleDelete} autoFocus>
             Delete
           </Button>

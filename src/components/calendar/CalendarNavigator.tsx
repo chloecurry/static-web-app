@@ -14,16 +14,48 @@ const CalendarNavigator = () => {
       : months[currentDate.getMonth()] + ' ' + currentDate.getFullYear()
   }
 
+  const getSmallDateString = () => {
+    return isYearView
+      ? currentDate.getFullYear()
+      : months[currentDate.getMonth()].substring(0, 3) +
+          ' ' +
+          currentDate.getFullYear()
+  }
+
   return (
     <>
-      <Typography variant="h6">
+      <Typography
+        variant="h6"
+        fontSize={15}
+        sx={{ display: { xs: 'block', sm: 'none' } }}
+      >
         <Stack direction="row" alignItems="center">
           <DecrementDateButton />
           <IncrementDateButton />
-          {getDateString()}
+          <Stack direction="column" alignItems="center">
+            {getSmallDateString()}
+            {!isYearView ? (
+              <ToggleYearViewButton />
+            ) : (
+              <ToggleMonthViewButton></ToggleMonthViewButton>
+            )}
+          </Stack>
         </Stack>
       </Typography>
-      {!isYearView ? <ToggleYearViewButton /> : <></>}
+      <Typography variant="h6" sx={{ display: { xs: 'none', sm: 'block' } }}>
+        <Stack direction="row" alignItems="center">
+          <DecrementDateButton />
+          <IncrementDateButton />
+          <header id="TopBar">{getDateString()}</header>
+        </Stack>
+      </Typography>{' '}
+      <Stack
+        direction="row"
+        alignItems="center"
+        sx={{ display: { xs: 'none', sm: 'block' } }}
+      >
+        {!isYearView ? <ToggleYearViewButton /> : <ToggleMonthViewButton />}
+      </Stack>
     </>
   )
 }
@@ -48,12 +80,38 @@ const DecrementDateButton = () => {
   }
 
   return (
-    <Button>
-      <ChevronLeftIcon
-        onClick={handleClick}
-        style={{ fontSize: '32px', color: '#4D4D4D' }}
-      ></ChevronLeftIcon>
-    </Button>
+    <>
+      <Button
+        sx={{
+          borderRadius: '60px',
+          display: { xs: 'none', sm: 'block' },
+          maxWidth: '70px',
+          minWidth: '70px'
+        }}
+      >
+        <ChevronLeftIcon
+          onClick={handleClick}
+          style={{ fontSize: '32px', color: '#4D4D4D', marginTop: '7px' }}
+        ></ChevronLeftIcon>
+      </Button>
+      <Button
+        sx={{
+          borderRadius: '60px',
+          display: { xs: 'block', sm: 'none' },
+          maxWidth: '40px',
+          minWidth: '40px'
+        }}
+      >
+        <ChevronLeftIcon
+          onClick={handleClick}
+          style={{
+            fontSize: '32px',
+            color: '#4D4D4D',
+            marginTop: '10px'
+          }}
+        ></ChevronLeftIcon>
+      </Button>
+    </>
   )
 }
 
@@ -77,12 +135,34 @@ const IncrementDateButton = () => {
   }
 
   return (
-    <Button>
-      <ChevronRightIcon
-        onClick={handleClick}
-        style={{ fontSize: '32px', color: '#4D4D4D' }}
-      ></ChevronRightIcon>
-    </Button>
+    <Box>
+      <Button
+        sx={{
+          borderRadius: '60px',
+          display: { xs: 'none', sm: 'block' },
+          maxWidth: '70px',
+          minWidth: '70px'
+        }}
+      >
+        <ChevronRightIcon
+          onClick={handleClick}
+          style={{ fontSize: '32px', color: '#4D4D4D', marginTop: '7px' }}
+        ></ChevronRightIcon>
+      </Button>
+      <Button
+        sx={{
+          borderRadius: '60px',
+          display: { xs: 'block', sm: 'none' },
+          maxWidth: '40px',
+          minWidth: '40px'
+        }}
+      >
+        <ChevronRightIcon
+          onClick={handleClick}
+          style={{ fontSize: '32px', color: '#4D4D4D', marginTop: '10px' }}
+        ></ChevronRightIcon>
+      </Button>
+    </Box>
   )
 }
 
@@ -95,10 +175,10 @@ const ToggleYearViewButton = () => {
   }
 
   return (
-    <Button onClick={handleClick}>
+    <Button onClick={handleClick} sx={{ borderRadius: '60px' }}>
       <Box
         sx={{
-          display: 'flex',
+          display: { xs: 'none', sm: 'block' },
           justifyContent: 'flex-end',
           color: '#898989',
           textDecoration: 'underline',
@@ -110,6 +190,72 @@ const ToggleYearViewButton = () => {
           variant="body2"
         >
           Year View
+        </Typography>
+      </Box>
+      <Box
+        sx={{
+          display: { xs: 'block', sm: 'none' },
+          justifyContent: 'flex-end',
+          color: '#898989',
+          textDecoration: 'underline',
+          fontFamily: 'Roboto'
+        }}
+      >
+        <Typography
+          // textTransform="capitalize"
+          variant="body2"
+          fontSize={'10px'}
+          width="60px"
+        >
+          Year View
+        </Typography>
+      </Box>
+    </Button>
+  )
+}
+
+const ToggleMonthViewButton = () => {
+  const { changeView, toggleBarOnDateClick } = useCalendarContext()
+
+  const handleClick = () => {
+    changeView()
+    toggleBarOnDateClick(0)
+  }
+
+  return (
+    <Button onClick={handleClick} sx={{ borderRadius: '60px' }}>
+      <Box
+        sx={{
+          display: { xs: 'none', sm: 'block' },
+          justifyContent: 'flex-end',
+          color: '#898989',
+          textDecoration: 'underline',
+          fontFamily: 'Roboto'
+        }}
+      >
+        <Typography
+          // textTransform="capitalize"
+          variant="body2"
+        >
+          Month View
+        </Typography>
+      </Box>
+      <Box
+        sx={{
+          display: { xs: 'block', sm: 'none' },
+          justifyContent: 'flex-end',
+          color: '#898989',
+          textDecoration: 'underline',
+          fontFamily: 'Roboto'
+        }}
+      >
+        <Typography
+          // textTransform="capitalize"
+          variant="body2"
+          fontSize={'9px'}
+          width="60px"
+        >
+          Month View
         </Typography>
       </Box>
     </Button>

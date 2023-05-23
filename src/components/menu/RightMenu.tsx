@@ -22,12 +22,12 @@ const RightMenu = (props: any) => {
   const [selectedCategory, setSelectedCategory] = useState(null)
 
   const alertPanelStyle = {
+    opacity: 1,
     bgcolor: 'white',
     color: 'black',
-    marginTop: '20px',
     paddingTop: '10px',
     height: 'calc(100vh - 64px)',
-    width: 300,
+    width: 320,
     boxShadow: '0 0 5px #ccc',
     overflow: 'hidden'
   }
@@ -44,12 +44,16 @@ const RightMenu = (props: any) => {
     <Popper
       open={Boolean(props.panelAnchor)}
       anchorEl={props.panelAnchor}
-      sx={{ bgcolor: 'white', zIndex: (theme) => theme.zIndex.drawer + 2 }}
+      sx={{
+        height: 'calc(100vh - 64px)',
+        bgcolor: 'white',
+        zIndex: (theme) => theme.zIndex.drawer + 2
+      }}
       modifiers={[
         {
           name: 'offset',
           options: {
-            offset: [-114]
+            offset: [0, 20]
           }
         }
       ]}
@@ -64,6 +68,7 @@ const RightMenu = (props: any) => {
             />
           ) : props.menuState === 1 ? (
             <AddEventRender
+              fromMenu={1}
               updateState={props.updateState}
               clickAway={handleClickAway}
             />
@@ -106,6 +111,12 @@ const RightMenu = (props: any) => {
             />
           ) : props.menuState === 3.2 ? (
             <RemoveAdmin
+              updateState={props.updateState}
+              clickAway={handleClickAway}
+            />
+          ) : props.menuState === 1.1 ? (
+            <AddEventRender
+              fromMenu={0}
               updateState={props.updateState}
               clickAway={handleClickAway}
             />

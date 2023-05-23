@@ -1,12 +1,14 @@
-import { AppBar, Typography, styled } from '@mui/material'
-import { Stack, Toolbar, Button } from '@mui/material/'
+import { AppBar, Typography, styled, Button, Box } from '@mui/material'
+import { Stack, Toolbar } from '@mui/material/'
 import Image from 'next/image'
 import RightMenuButton from './menu/RightMenuButton'
 import AlertButton from './alert/AlertButton'
 import React from 'react'
 import CalendarNavigator from './calendar/CalendarNavigator'
+import { useCalendarContext } from '@/store/CalendarContext'
 
 const TopBar = () => {
+  const { setToggleGrid, isYearView } = useCalendarContext()
   const StyledTopBar = styled(Toolbar)({
     display: 'flex',
     justifyContent: 'space-between',
@@ -36,10 +38,54 @@ const TopBar = () => {
           </Stack>
         </Stack>
 
-        <Stack direction="row" spacing={4}>
-          <Button sx={{ minWidth: '35px', maxWidth: '35px' }}>
-            <AlertButton />
-          </Button>
+        <Stack direction="row" spacing={1}>
+          {isYearView && (
+            <Button
+              sx={{
+                borderRadius: '60px'
+              }}
+              onClick={() => {
+                setToggleGrid((prev) => !prev)
+              }}
+            >
+              <Box
+                sx={{
+                  display: { xs: 'none', sm: 'block' },
+                  justifyContent: 'flex-end',
+                  color: '#898989',
+                  textDecoration: 'underline',
+                  fontFamily: 'Roboto'
+                }}
+              >
+                <Typography
+                  // textTransform="capitalize"
+                  variant="body2"
+                >
+                  Toggle Grid
+                </Typography>
+              </Box>
+              <Box
+                sx={{
+                  display: { xs: 'block', sm: 'none' },
+                  justifyContent: 'flex-end',
+                  color: '#898989',
+                  textDecoration: 'underline',
+                  fontFamily: 'Roboto',
+                  position: 'absolute'
+                }}
+              >
+                <Typography
+                  // textTransform="capitalize"
+                  variant="body2"
+                  fontSize={'10px'}
+                  width="60px"
+                >
+                  Toggle Grid
+                </Typography>
+              </Box>
+            </Button>
+          )}
+          <AlertButton />
           <RightMenuButton />
         </Stack>
       </StyledTopBar>
@@ -51,7 +97,7 @@ const MiniAELogo = () => {
   return (
     <Stack
       sx={{
-        display: { xs: 'none', sm: 'none' }
+        display: { xs: 'block', sm: 'none' }
       }}
     >
       <Stack
@@ -60,10 +106,7 @@ const MiniAELogo = () => {
         alignItems="center"
         justifyContent="space-between"
       >
-        <Image src="/img/logo.png" alt="logo" width="30" height="24" />
-        <Typography sx={{ display: { xs: 'none', sm: 'block' } }} variant="h6">
-          Calendar
-        </Typography>
+        <Image src="/img/logo.png" alt="logo" width="45" height="36" />
       </Stack>
     </Stack>
   )
@@ -72,10 +115,12 @@ const MiniAELogo = () => {
 const AELogo = () => {
   return (
     <>
-      <Image src="/img/logo.png" alt="logo" width="60" height="48" />
-      <Typography sx={{ display: { xs: 'none', sm: 'block' } }} variant="h6">
-        Calendar
-      </Typography>
+      <Stack sx={{ display: { xs: 'none', sm: 'block' } }}>
+        <Image src="/img/logo.png" alt="logo" width="60" height="48" />
+      </Stack>
+      <Stack sx={{ display: { xs: 'none', sm: 'block' } }}>
+        <Typography variant="h6">Calendar</Typography>
+      </Stack>
     </>
   )
 }
